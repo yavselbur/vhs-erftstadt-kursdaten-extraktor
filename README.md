@@ -25,11 +25,31 @@ Das Projekt besteht aus drei aufeinander aufbauenden Skripten:
 
 Dieses Repository enthält **nur den Quellcode**, keine vollständigen Kursdaten. Die gesammelten Daten stammen von der öffentlichen Website der VHS Erftstadt (vhs-erftstadt.de) und werden hier aus urheberrechtlichen Gründen nicht veröffentlicht. Dies ist kein offizielles Projekt der VHS Erftstadt.
 
+## RAG-Pipeline (Retrieval-Augmented Generation)
+
+Aufbauend auf den gesammelten Daten wurde ein lokales, kostenloses RAG-System implementiert:
+
+4. **`index_kurslar.py`** – Wandelt jeden Kurs (Titel + Beschreibung) mittels eines mehrsprachigen Embedding-Modells (`paraphrase-multilingual-MiniLM-L12-v2`) in einen Vektor um und speichert ihn in einer lokalen Chroma-Vektordatenbank.
+5. **`search_kurslar.py`** – Testet die semantische Suche: findet zu einer beliebigen Nutzeranfrage (in beliebiger Sprache) die relevantesten Kurse.
+6. **`rag.py`** – Vollständige RAG-Pipeline: kombiniert die semantische Suche mit einem lokal laufenden Sprachmodell (Qwen2.5:7B via Ollama), das ausschließlich auf Basis der gefundenen Kursdaten in der Sprache der Nutzeranfrage antwortet.
+
+Alle Komponenten laufen vollständig lokal und kostenlos (kein API-Schlüssel erforderlich), getestet auf einem Intel iMac (i9, 64GB RAM, AMD Radeon 580X) mit PyTorch MPS-Beschleunigung.
+
+**Getestete Sprachen:** Deutsch, Englisch, Türkisch (zuverlässig) sowie Ukrainisch (funktionsfähig, mit gelegentlichen Unregelmäßigkeiten bei Eigennamen – erwartbar bei einem 7B-Modell).
+
+## Bekannte Einschränkungen
+
+- Keine Filterung nach Kursstatus ("aktuell laufende Kurse") – geplante Erweiterung
+- Keine kategoriebasierte Vollständigkeitsabfrage ("alle Kurse einer Kategorie") – aktuell nur semantische Ähnlichkeitssuche (Top-5-Ergebnisse)
+
 ## Nächste Schritte
 
-- Aufbau eines Retrieval-Systems (Embeddings + Vektorsuche) zur Beantwortung von Nutzeranfragen
+- Zeitbasierte Filterung (Kursstart + Dauer → aktueller Status)
+- Hybride Suche: Kategoriefilter kombiniert mit semantischer Suche
 - Integration in einen mehrsprachigen Telegram-Bot (Deutsch / Englisch / Türkisch)
+
+
 
 ## Autor
 
-Yavuz — im Rahmen der beruflichen Weiterbildung im Bereich KI/IT.
+Yavuz Selim Burgu— im Rahmen der beruflichen Weiterbildung im Bereich KI/IT.
