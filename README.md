@@ -37,10 +37,17 @@ Alle Komponenten laufen vollständig lokal und kostenlos (kein API-Schlüssel er
 
 **Getestete Sprachen:** Deutsch, Englisch, Türkisch (zuverlässig) sowie Ukrainisch (funktionsfähig, mit gelegentlichen Unregelmäßigkeiten bei Eigennamen – erwartbar bei einem 7B-Modell).
 
+## Telegram-Bot
+
+7. **`rag_core.py`** – Enthält die zentrale RAG-Logik (Suche + Antwortgenerierung), wiederverwendbar für CLI und Bot.
+8. **`bot.py`** – Mehrsprachiger Telegram-Bot, der Nutzeranfragen entgegennimmt und über `rag_core.py` beantwortet.
+
 ## Bekannte Einschränkungen
 
 - Keine Filterung nach Kursstatus ("aktuell laufende Kurse") – geplante Erweiterung
 - Keine kategoriebasierte Vollständigkeitsabfrage ("alle Kurse einer Kategorie") – aktuell nur semantische Ähnlichkeitssuche (Top-5-Ergebnisse)
+- **Antwortzeit:** Auf dem verwendeten Intel-iMac (AMD-GPU) läuft Ollama ausschließlich CPU-basiert, da Metal-Beschleunigung nur auf Apple-Silicon-Geräten verfügbar ist. Dadurch dauern Antworten aktuell ca. 30–40 Sekunden. Auf Apple-Silicon-Hardware oder mit einer Cloud-API wäre die Antwortzeit deutlich kürzer.
+- Gelegentliche kleinere grammatikalische Unregelmäßigkeiten in generierten Antworten (typisch für 7B-Modelle bei ressourcenschonendem lokalem Betrieb)
 
 ## Nächste Schritte
 
