@@ -42,12 +42,21 @@ Alle Komponenten laufen vollständig lokal und kostenlos (kein API-Schlüssel er
 7. **`rag_core.py`** – Enthält die zentrale RAG-Logik (Suche + Antwortgenerierung), wiederverwendbar für CLI und Bot.
 8. **`bot.py`** – Mehrsprachiger Telegram-Bot, der Nutzeranfragen entgegennimmt und über `rag_core.py` beantwortet.
 
+## Erweiterte Funktionen (Zeitfilterung & Kategorielisten)
+
+9. **`kurs_tage_detay.py`** – Erfasst zusätzlich für jeden Kurs alle einzelnen Kurstage (Datum, Uhrzeit, Ort) sowie sämtliche Kursleiter:innen von der Detailseite, inklusive automatischer Verfolgung mehrseitiger Terminlisten.
+
+Damit unterstützt das System nun:
+- **Zeitbasierte Statusberechnung:** Für jeden Kurs wird anhand des Systemdatums präzise (in Python berechnet, nicht vom Sprachmodell geschätzt) bestimmt, ob er "noch nicht begonnen", "aktuell laufend" oder "abgeschlossen" ist.
+- **Kategoriebasierte Vollständigkeitsabfrage:** Bei Anfragen wie "alle Kurse in [Kategorie] auflisten" wird die semantische Suche umgangen und direkt eine vollständige, garantiert korrekte Liste aus der Datenbank abgerufen (schneller und zuverlässiger als eine Modellantwort).
+
 ## Bekannte Einschränkungen
 
-- Keine Filterung nach Kursstatus ("aktuell laufende Kurse") – geplante Erweiterung
-- Keine kategoriebasierte Vollständigkeitsabfrage ("alle Kurse einer Kategorie") – aktuell nur semantische Ähnlichkeitssuche (Top-5-Ergebnisse)
+- Kategorieerkennung basiert auf einfachem Keyword-Matching (kein echtes Sprachverständnis) – funktioniert zuverlässig bei den getesteten Sprachen, ist aber keine vollständige NLU-Lösung
+- Der Kurskategorie "Deutsch und Fremdsprachen" umfasst laut Website-Struktur ALLE Fremdsprachenkurse (nicht nur Deutsch) – dies spiegelt die Kategorisierung der VHS-Website wider, ist also korrektes Verhalten
 - **Antwortzeit:** Auf dem verwendeten Intel-iMac (AMD-GPU) läuft Ollama ausschließlich CPU-basiert, da Metal-Beschleunigung nur auf Apple-Silicon-Geräten verfügbar ist. Dadurch dauern Antworten aktuell ca. 30–40 Sekunden. Auf Apple-Silicon-Hardware oder mit einer Cloud-API wäre die Antwortzeit deutlich kürzer.
 - Gelegentliche kleinere grammatikalische Unregelmäßigkeiten in generierten Antworten (typisch für 7B-Modelle bei ressourcenschonendem lokalem Betrieb)
+
 
 ## Nächste Schritte
 
