@@ -22,9 +22,6 @@ import chromadb
 import requests
 import re
 from datetime import datetime, date
-from langdetect import detect, DetectorFactory
-
-DetectorFactory.seed = 0  # langdetect'in sonuçları her çalıştırmada aynı olsun (deterministik)
 
 VERITABANI_KLASORU = "chroma_db"
 OLLAMA_URL = "http://localhost:11434/api/chat"
@@ -151,28 +148,6 @@ _AY_ADLARI_TR = {
     1: "Ocak", 2: "Şubat", 3: "Mart", 4: "Nisan", 5: "Mayıs", 6: "Haziran",
     7: "Temmuz", 8: "Ağustos", 9: "Eylül", 10: "Ekim", 11: "Kasım", 12: "Aralık",
 }
-
-# --- YENİ: langdetect ile soru dilini KESİN tespit et ---
-# Önceki yöntem ("kullanıcı hangi dilde sorduysa o dilde cevap ver" talimatı) LLM'in
-# kendi çıkarımına bırakıyordu ve İngilizce soruya Almanca cevap verilmesine yol açtı.
-# Artık dili KODDA tespit edip LLM'e açıkça "bu soru X dilinde, cevabını SADECE X dilinde
-# yaz" diyoruz - çıkarıma bırakmıyoruz.
-_DIL_ADI_TR = {
-    "tr": "Türkçe", "de": "Almanca", "en": "İngilizce", "uk": "Ukraynaca",
-    "ru": "Rusça", "fr": "Fransızca", "es": "İspanyolca", "it": "İtalyanca",
-    "nl": "Hollandaca", "pt": "Portekizce", "pl": "Lehçe", "ar": "Arapça",
-}
-
-
-def _soru_dili_tespit_et(soru):
-    """langdetect ile sorunun dilini tespit eder, Türkçe dil adı olarak döndürür.
-    Tespit edilemezse (çok kısa metin, karışık dil vb.) None döner - bu durumda
-    eski davranışa (LLM'in kendi çıkarımı) geri dönülür."""
-    try:
-        kod = detect(soru)
-    except Exception:
-        return None
-    return _DIL_ADI_TR.get(kod, None)
 
 
 def _ay_bul(soru_kucuk):
@@ -370,23 +345,8 @@ def _yapisal_baglam_olustur(kategori_adi, dil_kodu=None, seviye_kodu=None, ay_ko
     return baslik + f"SONUÇ: {len(ciftler)} kurs bulundu.\n\n" + "\n---\n".join(parcalar)
 
 
-def _ollamaya_sor(soru, baglam, kesin_filtre=False, soru_dili=None):
+def _ollamaya_sor(soru, baglam, kesin_filtre=False):
     bugun_str = date.today().strftime("%d.%m.%Y")
-
-    if soru_dili:
-        dil_talimati = (
-            f"Kullanıcının sorusu {soru_dili} dilinde yazılmıştır. Cevabının TAMAMINI "
-            f"SADECE {soru_dili} dilinde yaz. Bağlamda (kurs bilgilerinde) başka bir dilde "
-            f"(örn. Almanca başlıklar) metin görsen bile, SEN kendi cevabını {soru_dili} "
-            f"dilinden ÇIKMADAN yaz; kurs adları/özel isimler hariç cümle kurgun baştan "
-            f"sona {soru_dili} olmalı."
-        )
-    else:
-        dil_talimati = (
-            "Kullanıcı hangi dilde soru sorduysa, cevabını da AYNI dilde ver. "
-            "Cevabının TAMAMINI TEK bir dilde yaz; cümle ortasında başka bir dile GEÇME "
-            "veya diller arasında karışık yazma."
-        )
 
     if kesin_filtre:
         ornekleme_notu = (
@@ -410,7 +370,9 @@ def _ollamaya_sor(soru, baglam, kesin_filtre=False, soru_dili=None):
         "Sana verilen kurs bilgilerine SADECE dayanarak kullanıcının sorusunu cevapla. "
         "Her kursun yanında verilen 'Durum' bilgisini OLDUĞU GİBİ kullan, kendin tarih hesaplaması YAPMA. "
         f"{ornekleme_notu} "
-        f"{dil_talimati} "
+        "Kullanıcı hangi dilde soru sorduysa, cevabını da AYNI dilde ver. "
+        "Cevabının TAMAMINI TEK bir dilde yaz; cümle ortasında başka bir dile GEÇME "
+        "veya diller arasında karışık yazma. "
         "Verilen kurslar arasında, kullanıcının sorusuyla gerçekten alakalı OLMAYANLARI cevabına dahil etme. "
         "Kurs bilgisi dışında bir şey uydurma. Cevabını kısa ve net tut, Telegram'da okunacak."
     )
@@ -438,8 +400,6 @@ def _ollamaya_sor(soru, baglam, kesin_filtre=False, soru_dili=None):
 
 
 def cevap_uret(soru):
-    soru_dili = _soru_dili_tespit_et(soru)
-
     # 1) AÇIK "tüm/listele" tarzı istekler -> deterministik Türkçe liste (mevcut davranış)
     liste_eslesme = _kategori_listesi_mi(soru)
     if liste_eslesme:
@@ -452,10 +412,10 @@ def cevap_uret(soru):
     if yapisal_eslesme:
         kategori, dil_kodu, seviye_kodu, ay_kodu, durum_filtresi = yapisal_eslesme
         baglam = _yapisal_baglam_olustur(kategori, dil_kodu, seviye_kodu, ay_kodu, durum_filtresi)
-        return _ollamaya_sor(soru, baglam, kesin_filtre=True, soru_dili=soru_dili)
+        return _ollamaya_sor(soru, baglam, kesin_filtre=True)
 
     # 3) Fallback: klasik embedding araması
     soru_embedding = _embed_model.encode([soru]).tolist()
     sonuclar = _koleksiyon.query(query_embeddings=soru_embedding, n_results=KAC_SONUC)
     baglam = _baglam_olustur(sonuclar)
-    return _ollamaya_sor(soru, baglam, kesin_filtre=False, soru_dili=soru_dili)
+    return _ollamaya_sor(soru, baglam, kesin_filtre=False)

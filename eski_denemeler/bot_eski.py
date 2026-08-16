@@ -17,7 +17,6 @@ from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, Con
 
 from rag_core import cevap_uret
 
-# .env dosyasındaki gizli bilgileri (token gibi) yüklüyoruz
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
@@ -30,11 +29,11 @@ if not TOKEN:
 async def baslat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Kullanıcı /start yazdığında çalışır."""
     await update.message.reply_text(
-        "Hallo! Ich bin der VHS Erftstadt Kursassistent. 🎓\n\n"
-        "Sie können mir auf Deutsch, Türkçe oder English schreiben - "
-        "ich antworte in der Sprache Ihrer Frage. Zum Beispiel:\n"
-        "- 'Gibt es Spanischkurse?'\n"
-        "- 'Yoga kursu var mı?'\n"
+        "Merhaba! Ben VHS Erftstadt kurs asistanıyım. 🎓\n\n"
+        "Türkçe, Deutsch veya English - hangi dilde isterseniz o dilde "
+        "sorabilirsiniz. Örneğin:\n"
+        "- 'İspanyolca kursu var mı?'\n"
+        "- 'Gibt es Yoga-Kurse?'\n"
         "- 'Any beginner Excel courses?'"
     )
 
@@ -55,7 +54,6 @@ def _mesaji_parcala(metin, limit=TELEGRAM_MESAJ_LIMITI):
     su_anki_parca = ""
 
     for satir in satirlar:
-        # Bu satırı eklersek limiti aşar mıyız?
         if len(su_anki_parca) + len(satir) + 1 > limit:
             if su_anki_parca:
                 parcalar.append(su_anki_parca)
@@ -80,7 +78,6 @@ async def mesaj_isle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         cevap = f"Üzgünüm, bir hata oluştu: {e}"
 
-    # Cevap çok uzunsa (Telegram'ın 4096 karakter sınırını aşarsa) parçalara bölüp gönderiyoruz
     for parca in _mesaji_parcala(cevap):
         await update.message.reply_text(parca)
 
