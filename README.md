@@ -64,7 +64,7 @@ Damit unterstützt das System nun:
 - Hybride Suche: Kategoriefilter kombiniert mit semantischer Suche
 - Integration in einen mehrsprachigen Telegram-Bot (Deutsch / Englisch / Türkisch)
 
-
+![Bot Demo](bot_demo.gif)
 
 ## Autor
 
